@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/electronics-repair-pos', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -36,5 +36,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log('Server running on port 5000');
+  console.log(`Server running on port ${PORT}`);
 });
