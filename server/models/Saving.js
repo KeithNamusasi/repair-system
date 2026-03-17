@@ -1,24 +1,38 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const savingSchema = new mongoose.Schema({
+const Saving = sequelize.define('Saving', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   amount: {
-    type: Number,
-    required: true,
-    min: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
   },
   note: {
-    type: String,
-    trim: true,
+    type: DataTypes.STRING,
+    allowNull: true
   },
   date: {
-    type: Date,
-    default: Date.now,
-  },
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'savings',
+  timestamps: true
 });
 
-module.exports = mongoose.model('Saving', savingSchema);
+module.exports = Saving;

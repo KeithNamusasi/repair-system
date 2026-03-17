@@ -1,48 +1,71 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const repairSchema = new mongoose.Schema({
+const Repair = sequelize.define('Repair', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   customerName: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
   phoneNumber: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
   device: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
   problemDescription: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
   repairCost: {
-    type: Number,
-    required: true,
-    min: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
   },
   status: {
-    type: String,
-    enum: ['Pending', 'In Repair', 'Completed', 'Collected'],
-    default: 'Pending',
+    type: DataTypes.ENUM('Pending', 'In Repair', 'Completed', 'Collected'),
+    defaultValue: 'Pending'
   },
   dateReceived: {
-    type: Date,
-    default: Date.now,
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   dateCompleted: {
-    type: Date,
-  },
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  tableName: 'repairs',
+  timestamps: true
 });
 
-module.exports = mongoose.model('Repair', repairSchema);
+module.exports = Repair;

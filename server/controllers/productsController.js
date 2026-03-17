@@ -2,7 +2,10 @@ const Product = require('../models/Product');
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const products = await Product.findAll({ 
+      where: { userId: req.user.id },
+      order: [['createdAt', 'DESC']]
+    });
     res.json(products);
   } catch (error) {
     console.error('Get products error:', error);
@@ -14,7 +17,7 @@ const createProduct = async (req, res) => {
   try {
     const { name, category, buyPrice, sellPrice, stockQuantity, supplier } = req.body;
 
-    const product = new Product({
+    const product = await Product.create({
       userId: req.user.id,
       name,
       category,
@@ -24,7 +27,6 @@ const createProduct = async (req, res) => {
       supplier,
     });
 
-    await product.save();
     res.status(201).json(product);
   } catch (error) {
     console.error('Create product error:', error);
@@ -37,16 +39,22 @@ const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { name, category, buyPrice, sellPrice, stockQuantity, supplier } = req.body;
 
-    const product = await Product.findOneAndUpdate(
-      { _id: id, userId: req.user.id },
-      { name, category, buyPrice, sellPrice, stockQuantity, supplier },
-      { new: true, runValidators: true }
-    );
+    const product = await Product.findOne({
+      where: { id, userId: req.user.id }
+    });
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    product.name = name;
+    product.category = category;
+    product.buyPrice = buyPrice;
+    product.sellPrice = sellPrice;
+    product.stockQuantity = stockQuantity;
+    product.supplier = supplier;
+
+    await product.save();
     res.json(product);
   } catch (error) {
     console.error('Update product error:', error);
@@ -58,11 +66,12 @@ const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findOneAndDelete({ _id: id, userId: req.user.id });
+    const product = await Product.findOne({ where: { id, userId: req.user.id } });
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    await product.destroy();
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Delete product error:', error);

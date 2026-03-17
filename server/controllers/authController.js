@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, username: user.username, role: user.role },
+    { id: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET || 'electronics-repair-secret-key',
     { expiresIn: '7d' }
   );
@@ -17,7 +17,7 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Please provide both username and password' });
     }
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ where: { username } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -31,7 +31,7 @@ const login = async (req, res) => {
 
     res.json({
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         role: user.role,
         businessName: user.businessName,
@@ -49,18 +49,18 @@ const login = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const { username, password, businessName, ownerName, email, phone, address, businessType } = req.body;
+    const { username, password, businessName, ownerName, email, phone, address } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ message: 'Please provide both username and password' });
     }
 
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
-    const user = new User({
+    const user = await User.create({
       username,
       password,
       role: 'admin', // First user becomes admin
@@ -69,14 +69,11 @@ const register = async (req, res) => {
       email: email || '',
       phone: phone || '',
       address: address || '',
-      businessType: businessType || '',
     });
-
-    await user.save();
 
     res.status(201).json({
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         role: user.role,
         businessName: user.businessName,
@@ -96,22 +93,20 @@ const createAdmin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
-    const user = new User({
+    const user = await User.create({
       username,
       password,
       role: 'admin',
     });
 
-    await user.save();
-
     res.status(201).json({
       user: {
-        id: user._id,
+        id: user.id,
         username: user.username,
         role: user.role,
       },

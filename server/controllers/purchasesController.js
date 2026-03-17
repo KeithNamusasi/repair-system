@@ -3,7 +3,10 @@ const Product = require('../models/Product');
 
 const getAllPurchases = async (req, res) => {
   try {
-    const purchases = await Purchase.find({ userId: req.user.id }).sort({ date: -1 });
+    const purchases = await Purchase.findAll({ 
+      where: { userId: req.user.id },
+      order: [['date', 'DESC']]
+    });
     res.json(purchases);
   } catch (error) {
     console.error('Get purchases error:', error);
@@ -15,14 +18,14 @@ const createPurchase = async (req, res) => {
   try {
     const { productId, supplier, quantity, buyingPrice } = req.body;
 
-    const product = await Product.findOne({ _id: productId, userId: req.user.id });
+    const product = await Product.findOne({ where: { id: productId, userId: req.user.id } });
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
     const totalCost = buyingPrice * quantity;
 
-    const purchase = new Purchase({
+    const purchase = await Purchase.create({
       userId: req.user.id,
       productId,
       supplier,
@@ -30,8 +33,6 @@ const createPurchase = async (req, res) => {
       buyingPrice,
       totalCost,
     });
-
-    await purchase.save();
 
     product.stockQuantity += quantity;
     product.buyPrice = buyingPrice;

@@ -2,7 +2,10 @@ const Repair = require('../models/Repair');
 
 const getAllRepairs = async (req, res) => {
   try {
-    const repairs = await Repair.find({ userId: req.user.id }).sort({ dateReceived: -1 });
+    const repairs = await Repair.findAll({ 
+      where: { userId: req.user.id },
+      order: [['dateReceived', 'DESC']]
+    });
     res.json(repairs);
   } catch (error) {
     console.error('Get repairs error:', error);
@@ -14,16 +17,15 @@ const createRepair = async (req, res) => {
   try {
     const { customerName, phoneNumber, device, problemDescription, repairCost } = req.body;
 
-    const repair = new Repair({
+    const repair = await Repair.create({
       userId: req.user.id,
       customerName,
       phoneNumber,
       device,
       problemDescription,
-      repairCost,
+      repairCost: repairCost || 0,
     });
 
-    await repair.save();
     res.status(201).json(repair);
   } catch (error) {
     console.error('Create repair error:', error);
@@ -36,16 +38,23 @@ const updateRepair = async (req, res) => {
     const { id } = req.params;
     const { customerName, phoneNumber, device, problemDescription, repairCost, status, dateCompleted } = req.body;
 
-    const repair = await Repair.findOneAndUpdate(
-      { _id: id, userId: req.user.id },
-      { customerName, phoneNumber, device, problemDescription, repairCost, status, dateCompleted },
-      { new: true, runValidators: true }
-    );
+    const repair = await Repair.findOne({
+      where: { id, userId: req.user.id }
+    });
 
     if (!repair) {
       return res.status(404).json({ message: 'Repair not found' });
     }
 
+    repair.customerName = customerName;
+    repair.phoneNumber = phoneNumber;
+    repair.device = device;
+    repair.problemDescription = problemDescription;
+    repair.repairCost = repairCost;
+    repair.status = status;
+    repair.dateCompleted = dateCompleted;
+
+    await repair.save();
     res.json(repair);
   } catch (error) {
     console.error('Update repair error:', error);

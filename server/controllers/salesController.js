@@ -3,7 +3,10 @@ const Product = require('../models/Product');
 
 const getAllSales = async (req, res) => {
   try {
-    const sales = await Sale.find({ userId: req.user.id }).sort({ date: -1 });
+    const sales = await Sale.findAll({ 
+      where: { userId: req.user.id },
+      order: [['date', 'DESC']]
+    });
     res.json(sales);
   } catch (error) {
     console.error('Get sales error:', error);
@@ -15,7 +18,7 @@ const createSale = async (req, res) => {
   try {
     const { productId, quantity, paymentMethod } = req.body;
 
-    const product = await Product.findOne({ _id: productId, userId: req.user.id });
+    const product = await Product.findOne({ where: { id: productId, userId: req.user.id } });
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -24,11 +27,11 @@ const createSale = async (req, res) => {
       return res.status(400).json({ message: 'Insufficient stock' });
     }
 
-    const sellingPrice = product.sellPrice;
+    const sellingPrice = parseFloat(product.sellPrice);
     const total = sellingPrice * quantity;
-    const profit = (sellingPrice - product.buyPrice) * quantity;
+    const profit = (sellingPrice - parseFloat(product.buyPrice)) * quantity;
 
-    const sale = new Sale({
+    const sale = await Sale.create({
       userId: req.user.id,
       productId,
       productName: product.name,
@@ -38,8 +41,6 @@ const createSale = async (req, res) => {
       profit,
       paymentMethod,
     });
-
-    await sale.save();
 
     product.stockQuantity -= quantity;
     await product.save();

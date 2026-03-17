@@ -1,49 +1,65 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const saleSchema = new mongoose.Schema({
+const Sale = sequelize.define('Sale', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'products',
+      key: 'id'
+    }
   },
   productName: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.STRING,
+    allowNull: false
   },
   quantity: {
-    type: Number,
-    required: true,
-    min: 1,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1
+    }
   },
   sellingPrice: {
-    type: Number,
-    required: true,
-    min: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0
+    }
   },
   total: {
-    type: Number,
-    required: true,
-    min: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
   },
   profit: {
-    type: Number,
-    required: true,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
   },
   paymentMethod: {
-    type: String,
-    required: true,
-    trim: true,
+    type: DataTypes.ENUM('cash', 'mpesa', 'bank', 'other'),
+    defaultValue: 'cash'
   },
   date: {
-    type: Date,
-    default: Date.now,
-  },
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'sales',
+  timestamps: true
 });
 
-module.exports = mongoose.model('Sale', saleSchema);
+module.exports = Sale;

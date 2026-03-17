@@ -1,25 +1,42 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const sequelize = require('./config/database');
+
+// Import models
+const User = require('./models/User');
+const Product = require('./models/Product');
+const Sale = require('./models/Sale');
+const Purchase = require('./models/Purchase');
+const Repair = require('./models/Repair');
+const Saving = require('./models/Saving');
+
 const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/electronics-repair-pos', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('MongoDB connected');
-});
+// Test database connection and sync models
+sequelize.authenticate()
+  .then(() => {
+    console.log('PostgreSQL connected');
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log('Database synchronized');
+  })
+  .catch(err => {
+    console.error('Unable to connect to database:', err);
+  });
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -38,3 +55,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
