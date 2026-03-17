@@ -1,60 +1,81 @@
-# Deployment Guide for Electronics Repair Shop POS System
+# Deployment Guide - Electronics Repair Shop POS
 
-## Hosting on Render
-
-### Your Backend URL
-✅ Backend is deployed at: `https://repair-ib3o.onrender.com`
+## Prerequisites
+- GitHub account
+- Render account (free tier)
 
 ---
 
-## Deploy Frontend on Render
+## Deploy Backend to Render
 
-### Step 1: Update Frontend
-The frontend has been updated to use your backend URL: `https://repair-ib3o.onrender.com/api`
+1. **Push code to GitHub**
+   ```bash
+   git add .
+   git commit -m "Migrate to PostgreSQL"
+   git push origin main
+   ```
 
-### Step 2: Deploy Frontend on Render
-1. Go to [Render Dashboard](https://dashboard.render.com)
-2. Click **"New +"** → **"Static Site"**
-3. Connect your GitHub repository
-4. **IMPORTANT - Set Root Directory:**
-   - Find **"Root Directory"** field
-   - Set it to: `client`
-5. Configure:
-   - **Name**: `repair-shop-pos` (or any name you want)
+2. **Create Backend Service on Render**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click **"New +"** → **"Web Service"**
+   - Connect your GitHub repository
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+   - **Environment**: `Node`
+
+3. **Add Environment Variables**
+   In Render dashboard for your backend, add:
+   - `DATABASE_URL` = `postgresql://neondb_owner:npg_cSHpjW43DRnQ@ep-polished-recipe-addamhb2-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
+   - `JWT_SECRET` = `electronics-repair-secret-key-2024`
+   - `PORT` = `5000`
+
+4. Click **Deploy**
+
+---
+
+## Deploy Frontend to Render
+
+1. **Build the frontend locally first**
+   ```bash
+   cd client
+   npm run build
+   ```
+
+2. **Create Frontend Service on Render**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click **"New +"** → **"Static Site"**
+   - Connect your GitHub repository
+   - **Root Directory**: `client`
    - **Build Command**: `npm install && npm run build`
    - **Publish directory**: `dist`
 
-6. Add Environment Variable:
-   - `VITE_API_URL` = `https://repair-ib3o.onrender.com/api`
+3. **Add Environment Variables**
+   - `VITE_API_URL` = Your backend URL (e.g., `https://your-backend.onrender.com/api`)
 
-7. Click **"Create Static Site"**
-
-8. Wait for deployment to complete (~2 minutes)
+4. Click **Deploy**
 
 ---
 
-## Your Live URLs
+## After Frontend Deployment
 
-| Component | URL |
-|-----------|-----|
-| **Backend API** | https://repair-ib3o.onrender.com |
-| **Frontend** | (Your Render static site URL after deployment) |
+Once your frontend is deployed, update the backend CORS to allow your frontend URL:
 
----
-
-## Testing
-
-After deploying the frontend:
-1. Open your frontend URL
-2. Register a new account
-3. Test adding products, sales, purchases, repairs, and savings
+1. Go to your backend service on Render
+2. Update the `CORS_ORIGIN` environment variable with your frontend URL
+3. Or redeploy the backend
 
 ---
 
-## Troubleshooting
+## Quick Fix - Allow All Origins (Not Recommended for Production)
 
-### Frontend can't connect to backend?
-Make sure `VITE_API_URL` is set to `https://repair-ib3o.onrender.com/api`
+If you want to quickly test, you can allow all origins in `server/server.js`:
 
-### CORS errors?
-The backend is configured to allow all origins. If you still get CORS errors, check that the URL is correct.
+```javascript
+app.use(cors({
+  origin: '*',
+  credentials: true,
+}));
+```
+
+**Note**: This is not secure for production. After testing, restrict to your actual frontend URL.

@@ -14,29 +14,36 @@ const Saving = require('./models/Saving');
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - allow all for now
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: '*',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
 app.use(express.json());
 
-// Test database connection and sync models
-sequelize.authenticate()
-  .then(() => {
-    console.log('PostgreSQL connected');
-    return sequelize.sync({ alter: true });
-  })
-  .then(() => {
+// Connect to database and sync
+const startServer = async () => {
+  try {
+    console.log('Connecting to PostgreSQL...');
+    await sequelize.authenticate();
+    console.log('PostgreSQL connected successfully');
+    
+    console.log('Syncing database...');
+    await sequelize.sync({ alter: true });
     console.log('Database synchronized');
-  })
-  .catch(err => {
-    console.error('Unable to connect to database:', err);
-  });
+    
+    // Start server
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+};
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -51,9 +58,6 @@ app.get('/', (req, res) => {
   res.json({ message: 'Electronics Repair POS API' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer();
 
 module.exports = app;
